@@ -124,3 +124,13 @@ Current automated tests validate key architecture contracts:
 - Some integrations are optional and environment-sensitive (keys/network/timeouts).
 
 These constraints are currently mitigated through service/domain separation and explicit operational health endpoints.
+
+
+## 8) Mobile advanced-flow architecture notes
+
+- Mobile uses an API-contract-first architecture with endpoint registry in `mobile/src/config/api.js` and service orchestration in `mobile/src/services/*`.
+- Offline-first operation is implemented through persistent local storage + sync queue semantics, then reconciled with backend scientific lifecycle.
+- Image identification and AI assistance are architecturally assistive and explicitly subordinate to human validation controls.
+- AR and advanced identification capabilities are optional overlays and do not redefine the core scientific governance model.
+
+Detailed canonical annex: [`mobile-advanced-flows.md`](./mobile-advanced-flows.md).

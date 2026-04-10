@@ -124,3 +124,13 @@ A suíte automatizada atual valida contratos arquiteturais centrais:
 - Algumas integrações são opcionais e sensíveis ao ambiente (chaves/rede/timeout).
 
 Essas restrições são mitigadas atualmente por separação em serviços/domínios e endpoints operacionais explícitos de health.
+
+
+## 8) Notas arquiteturais de fluxos mobile avançados
+
+- O mobile adota arquitetura orientada a contrato de API com registro de endpoints em `mobile/src/config/api.js` e orquestração em `mobile/src/services/*`.
+- A operação offline-first usa persistência local + semântica de fila de sync, com reconciliação no ciclo científico backend.
+- Identificação por imagem e IA assistiva são arquiteturalmente subordinadas à validação humana.
+- AR e identificação avançada são camadas opcionais e não redefinem o modelo de governança científica central.
+
+Anexo canônico detalhado: [`fluxos-mobile-avancados.md`](./fluxos-mobile-avancados.md).

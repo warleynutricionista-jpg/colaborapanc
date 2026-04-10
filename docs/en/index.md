@@ -17,6 +17,7 @@ This is the canonical English documentation tree for the current ColaboraPANC co
 - [Contributing](./contributing.md)
 - [Roadmap](./roadmap.md)
 - [FAQ](./faq.md)
+- [Mobile Advanced Flows (Technical Annex)](./mobile-advanced-flows.md)
 
 ## What these docs represent
 

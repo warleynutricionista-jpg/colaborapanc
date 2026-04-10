@@ -120,3 +120,15 @@ A suíte atual está organizada por domínios de comportamento/contrato:
 3. Modelos persistem estado de ciclo de vida e artefatos de auditoria.
 4. Mobile consome contratos estáveis de API e endpoints de paridade.
 5. Testes validam contratos transversais críticos e caminhos sensíveis a regressão.
+
+
+## 6) Mapa canônico de fluxos mobile científicos/offline/avançados
+
+- **Identificação por imagem**: captura mobile usa endpoints científicos compartilhados (`/api/mobile/identificacao/imagem/`, `/api/cientifico/pontos/<id>/inferencia/`, `/api/identificar-planta/`), com IA apenas assistiva.
+- **Revisão humana**: registros originados no mobile continuam sujeitos à validação por revisor/admin e histórico auditável.
+- **Offline + sync**: `offlineService.js` + `offlineStorage.js` sustentam fila persistente, sincronização resiliente e estado operacional de pendência/sincronização.
+- **Pacotes offline seletivos**: `plantasOfflineService.js` cobre fluxo seletivo de espécies para uso em campo.
+- **IA assistiva e auto-detecção**: `aiAssistService.js` e `autoDetectionService.js` fornecem sugestão não-final e devem manter status revisável.
+- **AR e recursos avançados**: recursos AR/modelo são complementares e não podem bloquear o ciclo científico central.
+
+Ver anexo técnico: [`fluxos-mobile-avancados.md`](./fluxos-mobile-avancados.md).

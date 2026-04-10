@@ -120,3 +120,15 @@ Current test suite is organized by behavior/contract domains:
 3. Models persist lifecycle state and audit artifacts.
 4. Mobile consumes stable API contracts and parity endpoints.
 5. Tests validate critical cross-domain contracts and regression-prone paths.
+
+
+## 6) Mobile scientific/offline/advanced flow map (canonical summary)
+
+- **Image identification**: mobile captures image and uses shared scientific endpoints (`/api/mobile/identificacao/imagem/`, `/api/cientifico/pontos/<id>/inferencia/`, `/api/identificar-planta/`), with assistive AI output only.
+- **Human review**: mobile-origin records remain subject to reviewer/admin validation and scientific history traceability.
+- **Offline + sync**: `offlineService.js` + `offlineStorage.js` manage persistent queue, retry-safe sync, and pending/synced operational state.
+- **Selective offline packages**: `plantasOfflineService.js` supports selective species package flow and offline-first field operation.
+- **Assistive AI and auto-detection**: `aiAssistService.js` and `autoDetectionService.js` provide non-final suggestions and should preserve reviewable status.
+- **AR and advanced resources**: AR/model features are complementary and must not block core scientific review lifecycle.
+
+See technical annex: [`mobile-advanced-flows.md`](./mobile-advanced-flows.md).
