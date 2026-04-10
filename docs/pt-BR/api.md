@@ -2,222 +2,210 @@
 
 ## Escopo
 
-Este guia canônico de API documenta a superfície HTTP ativa do ColaboraPANC para:
+Este guia canônico de API descreve a superfície HTTP ativa do ColaboraPANC para backend, frontend web, app mobile, integrações e fluxos operacionais/admin.
 
-- backend/web clients,
-- frontend web,
-- app mobile,
-- ferramentas de integração e operação.
+**Fonte de verdade de roteamento:** `mapping/urls.py` (carregado por `config/urls.py`).
 
-Registro autoritativo de rotas: `mapping/urls.py` (incluído por `config/urls.py`).
-
-## 1) URL base e modelo de roteamento
+## 1) URL base, composição e convenções
 
 - URL base local: `http://localhost:8000`
-- Composição raiz de URLs:
+- Composição de rotas:
   - `config/urls.py` inclui `mapping.urls` na raiz.
-  - `mapping/urls.py` mistura rotas web e rotas de API.
-- Fluxo de conta/autenticação web (allauth): `/accounts/*`
-- Endpoint de health: `GET /healthz/`
+  - Rotas de API e web coexistem na mesma árvore.
+- Rotas web de conta (django-allauth): `/accounts/*`
+- Healthcheck da plataforma: `GET /healthz/`
 
-## 2) Modelo de autenticação e autorização
+### Modelo de autenticação
 
-### 2.1 Fluxos principais de auth
-- `POST /api/token/login/`
-  - Finalidade: obter token DRF e sessão.
-  - Body: `username|email`, `password`.
-  - Retorno: `token`, `user_id`, `username`.
-- `POST /api/register/`
-  - Finalidade: criar conta + emitir token.
-  - Body: `nome`, `email`, `password`.
-  - Retorno: `token`, `user_id`, `username`.
+- Login por token/sessão: `POST /api/token/login/`
+- Criação de conta: `POST /api/register/`
+- Maioria dos recursos exige `IsAuthenticated`.
+- Rotas de revisão científica exigem perfil revisor/admin.
+- Alguns endpoints operacionais exigem staff/superuser.
 
-### 2.2 Perfil/conta autenticada
-- `GET /api/user/profile/`
-- `POST /api/user/change-password/`
+### Tags de maturidade usadas abaixo
 
-### 2.3 Níveis de permissão usados na API
-- **Público (`AllowAny`)**: entradas selecionadas de busca/leitura e enriquecimento.
-- **Autenticado (`IsAuthenticated`)**: maioria dos endpoints operacionais.
-- **Revisor/Admin (`IsReviewerOrAdmin`)**: endpoints de revisão/validação científica.
-- **Staff/Superuser**: endpoints administrativos de sync/status climático e testes de integração.
+- **Estável**: rota central com caminho de código ativo e contrato consolidado.
+- **Legado compatível**: mantida por compatibilidade com superfícies mais novas coexistentes.
+- **Operacional/Admin**: uso de administração, observabilidade e suporte.
+- **Em evolução**: domínio ativo com contrato ainda amadurecendo.
 
-## 3) Legenda de maturidade de endpoint
+## 2) Grupos de endpoints por domínio funcional
 
-- **Estável**: rota central com uso ativo e backing explícito de serviço/serializer.
-- **Legado compatível**: rota mantida para compatibilidade enquanto contratos novos coexistem.
-- **Operacional/Admin**: endpoints voltados a administração, observabilidade e suporte.
-- **Em evolução**: família de rotas em evolução ativa (contrato ainda amadurecendo).
+## 2.1 Domínio de identidade e conta
 
-## 4) Grupos funcionais de endpoints
+| Endpoint | Método | Auth | Finalidade | Entrada principal | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/token/login/` | POST | AllowAny | Login por token + sessão | `username` ou `email`, `password` | `token`, `user_id`, `username` | Estável |
+| `/api/register/` | POST | AllowAny | Criar conta e token | `nome`, `email`, `password` | `token`, `user_id`, `username` | Estável |
+| `/api/user/profile/` | GET | Autenticado | Resumo do perfil do usuário atual | – | perfil + estatísticas | Estável |
+| `/api/user/change-password/` | POST | Autenticado | Alterar senha e rotacionar token | `senha_atual`, `nova_senha` | detalhe de sucesso + novo token | Estável |
+| `/accounts/*` | GET/POST | Sessão/Web | Gestão de conta via allauth | formulários allauth | fluxo HTML/conta | Estável |
 
-## 4.1 Domínio de pontos e contribuição
+## 2.2 Domínio de pontos, contribuição e dados centrais
 
-### Endpoints de recurso por router (`/api/` via DRF)
-- `/api/pontos/` (**Estável**, create/update sensível a auth)
-  - Finalidade: listar/criar/atualizar pontos PANC georreferenciados.
-  - Principais campos no create:
-    - nomenclatura: `nome_popular`, variações opcionais de nome científico,
-    - geodado: `localizacao` (`[lng,lat]` ou objeto), opcional `latitude`/`longitude`,
-    - campos manuais opcionais de comestibilidade/sazonalidade,
-    - toggle `enriquecer_automaticamente`.
-  - Retorno: serialização `PontoPANC` com campos de ciclo/enriquecimento.
-- `/api/pontos/<id>/enriquecimento/` (**Estável**, action)
-- `/api/pontos/<id>/revalidar/` (**Estável**, action)
-- `/api/pontos/revalidar-lote/` (**Operacional/Admin-like**, action em lote)
-- `/api/compartilhamentos/` (**Estável**, recurso de colaboração)
+### Endpoints de recurso
 
-### Rotas auxiliares de busca/nome
-- `GET /api/busca-avancada/` (**Estável**)
-- `GET /api/plantas/` (**Estável**)
-- `GET /api/autocomplete-nome/` (**Legado compatível + Estável**)
-- `GET /api/nome-cientifico/` (**Legado compatível + Estável**)
-- `POST /api/geocode/` (**Utilitário legado compatível**)
+| Endpoint | Método(s) | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/pontos/` | GET, POST | Misto (create normalmente autenticado) | Listar/criar pontos georreferenciados | `nome_popular`, `localizacao`, campos científicos/alimentares opcionais | `PontoPANC` serializado | Estável |
+| `/api/pontos/<id>/` | GET, PUT, PATCH, DELETE | Sensível a auth | Consultar/atualizar/remover ponto | payload do ponto | ponto serializado / status | Estável |
+| `/api/pontos/<id>/enriquecimento/` | POST | Autenticado | Disparar enriquecimento de um ponto | contexto opcional | payload de enriquecimento | Estável |
+| `/api/pontos/<id>/revalidar/` | POST | Autenticado | Disparar revalidação de um ponto | – | payload de revalidação | Estável |
+| `/api/pontos/revalidar-lote/` | POST | Autenticado/uso admin | Revalidação em lote | `ids` (opcional), `limite` | resumo/resultados em lote | Operacional/Admin-like |
+| `/api/compartilhamentos/` | GET, POST, ... | Auth | Recurso de compartilhamento | campos do modelo | payload de recurso DRF | Estável |
 
-## 4.2 Domínio do fluxo científico (`/api/cientifico/*`)
+### Busca/utilidades de apoio
 
-- `POST /api/cientifico/pontos/<ponto_id>/inferencia/` (**Estável**, autenticado)
-  - Finalidade: executar inferência IA sobre imagem de ponto existente.
-  - Comportamento principal:
-    - valida ponto/imagem,
-    - chama serviço IA multi-provedor,
-    - persiste `PredicaoIA`, atualiza status/score do ponto,
-    - registra evento no histórico de validação.
-  - Header opcional: `X-PLANTID-KEY`.
-  - Retorno: payload `PredicaoIA`.
-- `GET /api/cientifico/revisao/fila/` (**Estável**, revisor/admin)
-  - Filtros de query: `confianca`, `status_fluxo`, `dias`.
-- `GET /api/cientifico/revisao/pontos/<ponto_id>/` (**Estável**, revisor/admin)
-  - Retorno: ponto, predição mais recente, última validação, histórico.
-- `POST /api/cientifico/pontos/<ponto_id>/validacao/` (**Estável**, revisor/admin)
-  - Body: `decisao_final` (`validado|rejeitado|necessita_revisao`), opcionais `especie_final`, `motivo_divergencia`, `observacao`.
-  - Retorno: registro `ValidacaoEspecialista`.
-- `GET /api/cientifico/pontos/<ponto_id>/historico/` (**Estável**, revisor/admin)
-- `GET /api/cientifico/dashboard/` (**Estável**, analytics autenticado)
+| Endpoint | Método | Auth | Finalidade | Principais params | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/busca-avancada/` | GET | AllowAny | Busca filtrada de pontos | filtros de nome/local/status/bbox | lista filtrada de pontos | Estável |
+| `/api/plantas/` | GET | AllowAny | Listagem de plantas referenciais | `nome`, `bioma`, `origem` | lista de plantas | Estável |
+| `/api/autocomplete-nome/` | GET | AllowAny | Sugestões de nome popular | `term` (+ modo detalhado opcional) | lista de sugestões | Legado compatível + Estável |
+| `/api/nome-cientifico/` | GET | AllowAny | Resolver nome científico | `nome_popular` | payload de resolução | Legado compatível + Estável |
+| `/api/geocode/` | POST | AllowAny | Utilitário de geocodificação reversa | payload de localização | resultado de geocode | Legado compatível |
 
-## 4.3 Domínio de comunicação, preferências e social
+## 2.3 Domínio de revisão e validação científica (`/api/cientifico/*`)
 
-### Recursos por router (`views_api.py`)
-- `/api/notificacoes/` (**Estável**)
-  - Inclui ações customizadas como não-lidas e marcação de leitura.
-- `/api/dispositivos-push/` (**Estável**)
-- `/api/conversas/` (**Estável**)
-- `/api/mensagens/` (**Estável**)
-- `/api/preferencias/` (**Estável**)
-- `/api/recomendacoes/` (**Estável**, foco leitura)
-- `/api/rotas/` (**Estável**)
+| Endpoint | Método | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/cientifico/pontos/<ponto_id>/inferencia/` | POST | Autenticado | Executar inferência IA sobre imagem de ponto | header opcional `X-PLANTID-KEY` | payload do registro `PredicaoIA` | Estável |
+| `/api/cientifico/revisao/fila/` | GET | Revisor/Admin | Listar fila de revisão | `confianca`, `status_fluxo`, `dias` | pontos filtrados em estados de revisão | Estável |
+| `/api/cientifico/revisao/pontos/<ponto_id>/` | GET | Revisor/Admin | Detalhe de revisão de um ponto | `ponto_id` | ponto + última predição + última validação + histórico | Estável |
+| `/api/cientifico/pontos/<ponto_id>/validacao/` | POST | Revisor/Admin | Decisão humana de validação | `decisao_final`, comentários/espécie opcionais | payload `ValidacaoEspecialista` | Estável |
+| `/api/cientifico/pontos/<ponto_id>/historico/` | GET | Revisor/Admin | Histórico de decisões/eventos científicos | `ponto_id` | lista de histórico | Estável |
+| `/api/cientifico/dashboard/` | GET | Autenticado | Resumo analítico científico | – | métricas/distribuições/amostra de priorização | Estável |
 
-### Endpoints companheiros legados (`views.py`)
-- `POST /api/push-token/`
-- `GET /api/notificacoes/`
-- `GET /api/conversas/`
-- `GET /api/mensagens/`
-- `POST /api/compartilhamentos/`
+## 2.4 Domínio de comunicação, preferências e rotas
 
-> Observação: endpoints de router e legados coexistem neste domínio e devem ser tratados como superfície de compatibilidade.
+### Recursos DRF por router (primários)
 
-## 4.4 Domínio de AR e identificação avançada
+| Endpoint | Método(s) | Auth | Finalidade | Entrada principal | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/notificacoes/` | GET, POST, PATCH... + actions | Autenticado | Ciclo de notificações do usuário | payload de notificação/ação | notificações e resultados de ação | Estável |
+| `/api/dispositivos-push/` | GET, POST, PATCH... | Autenticado | Ciclo de token de dispositivo push | `token`, `plataforma` | payload de registro de dispositivo | Estável |
+| `/api/conversas/` | GET, POST, ... | Autenticado | Ciclo de conversas | identificadores de participante | payload de conversa | Estável |
+| `/api/mensagens/` | GET, POST, ... | Autenticado | Ciclo de mensagens | `conversa_id`, `conteudo` | payload de mensagem | Estável |
+| `/api/preferencias/` | GET, POST, PATCH | Autenticado | Preferências de usuário | campos de preferência | payload de preferência | Estável |
+| `/api/recomendacoes/` | GET (+ action) | Autenticado | Recomendações personalizadas | payload de ação em recomendação | lista/payload de recomendações | Estável |
+| `/api/rotas/` | GET, POST, PATCH... | Autenticado | Registros de rotas | campos de rota | payload de rota | Estável |
 
-- `POST /api/identificar-planta/` (**Em evolução**)
-- `GET /api/buscar-plantas/` (**Em evolução**)
-- `GET /api/modelos-ar-disponiveis/` (**Em evolução**)
-- `/api/plantas-customizadas/` (recurso DRF, **Em evolução**)
-- `/api/modelos-ar/` (recurso DRF, **Em evolução**)
-- `/api/historico-identificacao/` (recurso orientado a leitura, **Em evolução**)
-- `/api/referencias-ar/` (recurso de router em `views.py`, **Legado compatível/Em evolução**)
+### Endpoints de compatibilidade (`views.py`)
 
-## 4.5 Domínio de offline de espécies e paridade mobile
+| Endpoint | Método | Auth | Finalidade | Maturidade |
+|---|---|---|---|---|
+| `/api/push-token/` | POST | Misto | Fluxo legado de push | Legado compatível |
+| `/api/notificacoes/` | GET | Misto | Listagem legada de notificações | Legado compatível |
+| `/api/conversas/` | GET | Misto | Listagem legada de conversas | Legado compatível |
+| `/api/mensagens/` | GET | Misto | Listagem legada de mensagens | Legado compatível |
+| `/api/compartilhamentos/` | POST | Misto | Fluxo legado de compartilhamento | Legado compatível |
 
-### APIs de espécies offline
-- `GET /api/especies-referenciais/busca/` (**Estável**)
-- `GET /api/especies-referenciais/busca-recursiva/` (**Em evolução**)
-- `GET /api/plantas-offline/disponiveis/` (**Estável**)
-- `GET /api/plantas-offline/pacotes/` (**Estável**)
-- `POST /api/plantas-offline/pacotes/<pacote_id>/baixar/` (**Estável**)
-- `POST /api/plantas-offline/baixar/` (**Estável**)
-- `GET /api/plantas-offline/<planta_id>/dados/` (**Estável**)
-- `GET /api/plantas-offline/minhas/` (**Estável**)
-- `POST /api/plantas-offline/<planta_id>/remover/` (**Estável**)
-- `GET|POST /api/plantas-offline/configuracoes/` (**Estável**)
-- `POST /api/plantas-offline/sincronizar/` (**Estável**)
+## 2.5 Domínio de AR e identificação avançada
+
+| Endpoint | Método(s) | Auth | Finalidade | Entrada principal | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/identificar-planta/` | POST | AllowAny/Auth (dependendo do contexto) | Identificação avançada por imagem | imagem + opções | payload de identificação | Em evolução |
+| `/api/buscar-plantas/` | GET | AllowAny | Busca de plantas no fluxo avançado | termos de consulta | resultados de busca | Em evolução |
+| `/api/modelos-ar-disponiveis/` | GET | AllowAny | Catálogo público de modelos AR | filtros opcionais | lista de modelos AR | Em evolução |
+| `/api/plantas-customizadas/` | CRUD | Auth | Recurso de plantas customizadas | campos do modelo | payload de recurso DRF | Em evolução |
+| `/api/modelos-ar/` | CRUD | Auth | Recurso de modelos AR | campos do modelo | payload de recurso DRF | Em evolução |
+| `/api/historico-identificacao/` | GET | Auth | Histórico de identificação | filtros opcionais | registros históricos | Em evolução |
+| `/api/referencias-ar/` | CRUD | Auth | Recurso de referências AR | campos do modelo | payload de recurso DRF | Legado compatível/Em evolução |
+
+## 2.6 Domínio de espécies offline e paridade mobile
+
+### APIs de inventário/download offline de espécies
+
+| Endpoint | Método(s) | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/especies-referenciais/busca/` | GET | AllowAny/Auth | Busca canônica de espécies referenciais | termos de consulta | lista normalizada de espécies | Estável |
+| `/api/especies-referenciais/busca-recursiva/` | GET | AllowAny/Auth | Busca recursiva expandida de espécies | termos de consulta | conjunto expandido de resultados | Em evolução |
+| `/api/plantas-offline/disponiveis/` | GET | Auth | Listar espécies disponíveis para download | filtros | lista de disponibilidade | Estável |
+| `/api/plantas-offline/pacotes/` | GET | Auth | Listar pacotes offline predefinidos | – | lista de pacotes | Estável |
+| `/api/plantas-offline/pacotes/<pacote_id>/baixar/` | POST | Auth | Baixar pacote predefinido | `pacote_id` | payload do pacote | Estável |
+| `/api/plantas-offline/baixar/` | POST | Auth | Baixar seleção de espécies | payload de seleção | payload de espécies selecionadas | Estável |
+| `/api/plantas-offline/<planta_id>/dados/` | GET | Auth | Obter payload offline de uma espécie | `planta_id` | payload da espécie | Estável |
+| `/api/plantas-offline/minhas/` | GET | Auth | Listar baixadas do usuário | – | lista do usuário | Estável |
+| `/api/plantas-offline/<planta_id>/remover/` | POST | Auth | Remover espécie baixada | `planta_id` | payload de status | Estável |
+| `/api/plantas-offline/configuracoes/` | GET, POST | Auth | Ler/atualizar configuração offline | payload de configuração | payload de configuração | Estável |
+| `/api/plantas-offline/sincronizar/` | POST | Auth | Sincronizar estado offline | payload de sync | resumo de sincronização | Estável |
 
 ### APIs de paridade mobile (`/api/mobile/*`)
-- `POST /api/mobile/identificacao/imagem/` (**Estável**, autenticado)
-  - Entrada: imagem multipart (`imagem` ou `foto`), opcionais `usar_custom_db`, `usar_google`.
-  - Retorno: payload normalizado de identificação (`sucesso`, nomes botânicos/populares, score, flag de revisão pendente, metadados de candidatos).
-- `GET /api/mobile/mapa/previews/` (**Estável**, autenticado)
-  - Query: `q`, `limite`.
-  - Retorno: cards leves de mapa para renderização mobile.
-- `GET /api/mobile/offline/base/metadata/` (**Estável**, autenticado)
-- `GET /api/mobile/offline/base/` (**Estável**, autenticado)
-  - Query: `limite`, `busca`.
 
-## 4.6 Domínio ambiental e territorial
+| Endpoint | Método | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/mobile/identificacao/imagem/` | POST | Autenticado | Contrato canônico mobile de identificação por imagem | imagem multipart (`imagem`/`foto`), toggles opcionais | payload normalizado de identificação | Estável |
+| `/api/mobile/mapa/previews/` | GET | Autenticado | Payload canônico de preview de mapa para mobile | `q`, `limite` | `{total, resultados[]}` | Estável |
+| `/api/mobile/offline/base/metadata/` | GET | Autenticado | Metadados/versionamento da base offline | – | metadados de versão/contagem | Estável |
+| `/api/mobile/offline/base/` | GET | Autenticado | Exportar payload da base offline | `limite`, `busca` | metadata + payload de espécies | Estável |
 
-### APIs MapBiomas (`/api/mapbiomas/*`)
-- `GET /api/mapbiomas/alertas/`
-- `GET /api/mapbiomas/alertas/<alert_code>/`
-- `GET /api/mapbiomas/territorios/`
-- `GET /api/mapbiomas/propriedade/`
-- `GET /api/mapbiomas/ponto/`
-- `GET /api/mapbiomas/pontos-panc/<ponto_id>/`
-- `GET /api/mapbiomas/testar/`
+## 2.7 Domínio ambiental e territorial
 
-Status: **Estável/Em evolução** (respostas dependentes de integração externa).
+### Endpoints MapBiomas
 
-### APIs de clima
-- `GET /api/alertas-ativos/` (**Estável**, leitura pública)
-  - Query: `ponto_id`, `limit`.
-- `GET /api/historico_alertas_api/` (**Estável**, leitura pública)
-  - Query: `ponto_id|ponto`, `limit`.
-- `POST /api/clima/sincronizar/` (**Operacional/Admin**, staff/superuser)
-  - Body: opcionais `ponto_id`, `only_active`.
-- `GET /api/clima/status/` (**Operacional/Admin**, staff/superuser)
+| Endpoint | Método | Auth | Finalidade | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|
+| `/api/mapbiomas/alertas/` | GET | AllowAny/Auth | consultar alertas de desmatamento | payload de alertas | Estável/Em evolução |
+| `/api/mapbiomas/alertas/<alert_code>/` | GET | AllowAny/Auth | detalhar alerta por código | payload detalhado do alerta | Estável/Em evolução |
+| `/api/mapbiomas/territorios/` | GET | AllowAny/Auth | consultar territórios | payload de territórios | Estável/Em evolução |
+| `/api/mapbiomas/propriedade/` | GET | AllowAny/Auth | consulta por propriedade/CAR | payload de alertas por propriedade | Estável/Em evolução |
+| `/api/mapbiomas/ponto/` | GET | AllowAny/Auth | consulta contextual por ponto | payload contextual | Estável/Em evolução |
+| `/api/mapbiomas/pontos-panc/<ponto_id>/` | GET | AllowAny/Auth | alertas próximos para ponto | payload ponto-alerta | Estável/Em evolução |
+| `/api/mapbiomas/testar/` | GET | AllowAny/Auth | teste de conectividade | payload de status de teste | Operacional/Admin-like |
 
-## 4.7 Domínio de enriquecimento taxonômico (`/api/enriquecimento/*`)
+### Endpoints de clima
 
-- `POST /api/enriquecimento/` (**Estável**, entrada pública)
-  - Body: `nome_cientifico`, opcional `planta_id`.
-- `POST /api/enriquecimento/revalidar/` (**Estável**, autenticado)
-  - Body: `planta_id`.
-- `GET /api/enriquecimento/<planta_id>/` (**Estável**)
-- `GET /api/enriquecimento/<planta_id>/historico/` (**Estável**)
+| Endpoint | Método | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/alertas-ativos/` | GET | AllowAny | listar alertas climáticos ativos | `ponto_id`, `limit` | `{count, results[]}` | Estável |
+| `/api/historico_alertas_api/` | GET | AllowAny | listar histórico de alertas climáticos | `ponto_id`/`ponto`, `limit` | `{count, results[]}` | Estável |
+| `/api/clima/sincronizar/` | POST | Staff/Superuser | disparar sincronização climática | opcionais `ponto_id`, `only_active` | resumo created/updated/skipped/errors | Operacional/Admin |
+| `/api/clima/status/` | GET | Staff/Superuser | status operacional clima/ambiental | – | integrações + métricas de alerta | Operacional/Admin |
 
-## 4.8 Endpoints administrativos de integração e operação
+## 2.8 Domínio de enriquecimento taxonômico (`/api/enriquecimento/*`)
 
-- `GET /api/admin/integracoes/health/` (**Operacional/Admin**)
-- `POST /api/admin/integracoes/testar/` (**Operacional/Admin**)
-  - Body: opcional `integration_name`.
-  - `integration_name` inválido retorna `400` com `valid_options`.
-- `GET /painel-admin/integracoes/` (**Painel web Operacional/Admin**)
+| Endpoint | Método | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/enriquecimento/` | POST | AllowAny | enriquecer nome científico e opcionalmente vincular planta | `nome_cientifico`, opcional `planta_id` | payload de resultado de enriquecimento | Estável |
+| `/api/enriquecimento/revalidar/` | POST | Autenticado | reexecutar enriquecimento para planta existente | `planta_id` | payload de revalidação | Estável |
+| `/api/enriquecimento/<planta_id>/` | GET | AllowAny | consultar payload enriquecido de uma planta | `planta_id` | payload de planta enriquecida | Estável |
+| `/api/enriquecimento/<planta_id>/historico/` | GET | AllowAny | consultar histórico de enriquecimentos | `planta_id` | lista histórica | Estável |
 
-## 5) Endpoints legados/compatíveis e superfície mista para atenção
+## 2.9 Domínio de administração de integrações e operações
 
-As áreas abaixo coexistem intencionalmente com contratos mais novos e devem ser tratadas como camada de compatibilidade:
+| Endpoint | Método | Auth | Finalidade | Principais params/body | Retorno esperado | Maturidade |
+|---|---|---|---|---|---|---|
+| `/api/admin/integracoes/health/` | GET | Auth + validação admin | status consolidado das integrações | – | lista/status de integrações | Operacional/Admin |
+| `/api/admin/integracoes/testar/` | POST | Auth + validação admin | executar sonda(s) de integração | opcional `integration_name` | resumo de execução + `resultados[]` | Operacional/Admin |
+| `/painel-admin/integracoes/` | GET/POST | acesso web admin | painel operacional de integrações | seletor opcional de integração | dashboard HTML | Operacional/Admin |
 
-- coexistência de router e endpoints de função em namespaces próximos (`/api/notificacoes`, `/api/conversas`, `/api/mensagens`, `/api/compartilhamentos`),
-- rota legada/híbrida de identificação web (`/api/identificar/`) coexistindo com APIs científica e avançada,
-- rotas web-form/admin expostas na mesma árvore de URL do projeto.
+## 3) Watchlist de legados/experimentais
 
-## 6) Expectativas padrão de resposta/erro
+Trate os itens abaixo como superfícies de compatibilidade ou maturidade parcial:
 
-Códigos comuns nas famílias de endpoint:
-- `200/201`: sucesso.
+- coexistência de recursos router com endpoints de compatibilidade baseados em função no namespace de comunicação,
+- fluxo híbrido legado `/api/identificar/` coexistindo com contratos científicos e avançados,
+- fluxos de AR/customização e busca recursiva de espécies marcados como em evolução,
+- árvore de rotas mista web/API contendo páginas operacionais admin.
+
+## 4) Expectativas padrão de resposta e erro
+
+- `200/201`: operação concluída com sucesso.
 - `400`: falha de validação/regra de negócio.
-- `401/403`: sem autenticação/sem autorização.
+- `401/403`: falha de autenticação/autorização.
 - `404`: recurso não encontrado.
-- `503`: indisponibilidade de integração externa (notável em fallback de inferência IA).
+- `503`: integração upstream indisponível (notável em provedores de inferência).
 
-## 7) Anexo técnico sugerido (recomendado)
+## 5) Anexo técnico sugerido (recomendado)
 
-Para manter este documento canônico legível sem perder rastreabilidade de inventário completo, recomenda-se manter anexo dedicado de inventário de endpoints e contratos, por exemplo:
+Para evitar poluir este guia canônico e ainda manter inventário completo, recomenda-se anexos dedicados de inventário, por exemplo:
 
 - `docs/en/api-endpoint-inventory.md`
 - `docs/pt-BR/api-inventario-endpoints.md`
 
-Conteúdo sugerido do anexo:
+Estrutura recomendada do anexo:
 - lista exaustiva de endpoints,
 - schemas de request/response por rota,
-- referência de serializers,
-- tags de maturidade por endpoint,
-- notas de depreciação/compatibilidade.
+- mapa de serializers/services,
+- tags de maturidade e compatibilidade,
+- notas de depreciação e trilha de migração.
