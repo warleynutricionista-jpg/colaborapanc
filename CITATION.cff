@@ -1,9 +1,9 @@
-cff-version: 1.2.0
+cff-version: 1.0.0
 message: "If you use ColaboraPANC, please cite it using this metadata."
 type: software
 title: "ColaboraPANC"
 version: "1.0.0"
-doi: "10.5281/zenodo.19546445"
+doi: "10.5281/zenodo.19546614"
 date-released: "2026-04-12"
 license: "MIT"
 repository-code: "https://github.com/warleynutricionista-jpg/colaborapanc"
