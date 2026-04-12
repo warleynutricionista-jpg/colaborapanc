@@ -7,7 +7,7 @@ Choose your language / Escolha seu idioma:
 
 ## Purpose of this hub
 
-This file is the documentation entry layer. It centralizes language selection and points to the canonical documentation trees that describe the current codebase behavior.
+This file is the documentation entry layer and centralizes canonical links for installation, testing, citation, and SoftwareX editorial preparation artifacts.
 
 ## Canonical documentation sets
 
@@ -16,23 +16,21 @@ This file is the documentation entry layer. It centralizes language selection an
 
 Both canonical sets should keep equivalent scope and depth.
 
-## Legacy and supporting documentation
+## Quick links
 
-- `docs/pt/`: legacy Portuguese documentation preserved for technical traceability and controlled migration into canonical docs.
-- `docs/en/README.md`: backward-compatible legacy index for older English links.
-- `docs/academic/`: paper and citation artifacts for academic dissemination.
+- **Quick start (EN):** [`docs/en/installation.md`](./en/installation.md)
+- **Quick start (PT-BR):** [`docs/pt-BR/instalacao.md`](./pt-BR/instalacao.md)
+- **Testing (EN):** [`docs/en/testes.md`](./en/testes.md)
+- **Citation (EN):** [`docs/en/citation.md`](./en/citation.md)
+- **Citation (PT-BR):** [`docs/pt-BR/citacao.md`](./pt-BR/citacao.md)
+- **Software release/tag 1.0.0:** https://github.com/warleynutricionista-jpg/colaborapanc/releases/tag/1.0.0
+- **Archival DOI:** https://doi.org/10.5281/zenodo.19546445
+- **SoftwareX preparation package:** [`submission/softwarex/`](../submission/softwarex/README.md)
 
-## Coverage expected from canonical docs
+## Academic and editorial materials
 
-The canonical indexes should route to documentation that covers:
-
-- Backend platform architecture and operation (Django + DRF).
-- API surface and endpoint families.
-- Scientific workflow (AI inference, review, validation, audit trail).
-- Environmental and territorial integrations (MapBiomas, climate pipeline).
-- Mobile app architecture and backend parity flows.
-- Auxiliary collaboration modules (notifications, conversations, gamification, routes, preferences).
-- Installation, deployment, administration, contribution process, roadmap, and FAQ.
+- `docs/academic/`: internal paper draft and references.
+- `submission/softwarex/`: editorial package aligned with SoftwareX metadata requirements (C1–C9).
 
 ## Source-of-truth policy
 
