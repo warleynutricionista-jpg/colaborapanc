@@ -1,79 +1,158 @@
 ---
-title: 'ColaboraPANC: An Open-Source Platform for AI-Assisted Geo-Referenced Mapping and Human-in-the-Loop Validation of Non-Conventional Food Plants'
+title: 'ColaboraPANC: An Open-Source Citizen Science Platform for AI-Assisted Georeferenced Mapping and Expert Validation of Non-Conventional Food Plants in Brazil'
+subtitle: 'Internal editorial draft for SoftwareX preparation (not the official journal template)'
 tags:
   - Python
+  - JavaScript
   - Django
   - citizen science
-  - biodiversity
-  - non-conventional food plants
-  - geospatial
-  - human-in-the-loop
+  - biodiversity informatics
   - food security
-  - Brazil
+  - environmental monitoring
+  - geospatial systems
 authors:
-  - name: Placeholder Author
-    orcid: 0000-0000-0000-0000
+  - name: Warley Alisson Souza
+    orcid: 0000-0003-2063-1531
     affiliation: 1
-    # TODO: Replace with real name and ORCID before submission
+    email: warleyalisson@gmail.com
+  - name: Raquel Linhares Bello de Araujo
+    orcid: 0000-0002-5110-5203
+    affiliation: 1
+    email: raquellba.linhares@gmail.com
+  - name: Marinalva Woods Pedrosa
+    orcid: 0000-0002-4850-7615
+    affiliation: 2
+    email: marinalva@epamig.br
+  - name: Julio Onesio-Ferreira Melo
+    orcid: 0000-0002-7483-0942
+    affiliation: 3
+    email: onesiomelo@gmail.com
 affiliations:
-  - name: Placeholder Institution, Brazil
+  - name: Universidade Federal de Minas Gerais (UFMG), Belo Horizonte, Minas Gerais, Brazil
     index: 1
-    # TODO: Replace with real institution name before submission
-date: 10 April 2026
+  - name: Empresa de Pesquisa Agropecuária de Minas Gerais (EPAMIG), Minas Gerais, Brazil
+    index: 2
+  - name: Universidade Federal de São João del-Rei (UFSJ), Sete Lagoas, Minas Gerais, Brazil
+    index: 3
+date: 12 April 2026
 bibliography: paper.bib
 ---
 
-# Summary
+# Editorial status
 
-ColaboraPANC is an open-source platform for collaborative, geo-referenced registration and scientific validation of Non-Conventional Food Plants (PANCs — *Plantas Alimentícias Não Convencionais*) in Brazil. PANCs are species with nutritional, culinary, or ecological value that are absent from mainstream food production chains but are present in urban and peri-urban environments, agroforestry systems, and traditional communities [@kinupp2014].
+This file is an internal editorial draft for SoftwareX preparation. It consolidates agreed metadata and manuscript content, but it is not the official journal submission template.
 
-The platform integrates four technical components into a single auditable workflow: (1) geo-referenced field data collection via a React Native mobile application; (2) AI-assisted botanical identification through normalised calls to external providers (PlantNet [@plantnet] and Plant.id); (3) human-in-the-loop expert validation with full decision provenance; and (4) explainable territorial prioritisation based on a composite heuristic score. The backend is implemented in Django 4.2 with PostGIS spatial extensions [@postgis], exposing a Django REST Framework API consumed by the mobile client.
+## Submission type
 
-The scientific core of the system — models `PontoPANC`, `PredicaoIA`, `ValidacaoEspecialista`, and `HistoricoValidacao` — encodes a traceable cycle from raw citizen observation to expert-validated biodiversity record, with structured divergence tracking when AI predictions and human decisions differ.
+Original software publication.
 
-# Statement of Need
+## Corresponding author
 
-Biodiversity monitoring of underutilised food plants faces a critical data-quality challenge: field observations collected by non-specialist contributors are heterogeneous in taxonomic precision, image quality, and geographic metadata. Existing general-purpose biodiversity platforms (e.g., iNaturalist [@inat], GBIF [@gbif]) provide observation infrastructure but do not implement role-restricted expert validation workflows, AI inference provenance tracking, or territorial prioritisation tailored to local socio-environmental conditions.
+Warley Alisson Souza (warleyalisson@gmail.com).
 
-ColaboraPANC addresses this gap for the Brazilian PANC context by providing: a controlled validation pipeline that prevents unreviewed AI outputs from becoming final records; structured confidence classification with explicit risk bands (`faixa_risco`); auditability through a `HistoricoValidacao` event log; and a scientifically interpretable territorial score combining species incidence, climate risk, validation reliability, and observation recency. The result is a dataset-quality infrastructure that transforms distributed citizen observations into records suitable for food security planning, conservation prioritisation, and ecological research.
+# Software description
 
-# Design and Implementation
+ColaboraPANC is an open-source collaborative platform for georeferenced mapping of non-conventional food plants (PANCs), integrating AI-assisted identification, expert validation, environmental monitoring, and web/mobile workflows. Its purpose is to improve the scientific usability, traceability, and territorial interpretation of citizen-contributed biodiversity records related to underutilized edible plants in Brazil.
 
-## Architecture
+# Problem statement
 
-The system follows a layered architecture separating concerns across three tiers:
+Transforming collaborative observations of non-conventional food plants into auditable, georeferenced, and scientifically usable records by combining citizen contribution, AI-assisted support, expert validation, and territorial/environmental context.
 
-- **Backend (Django 4.2 + PostGIS):** Domain logic is organised in `mapping/domains/` (analytics, AR, climate, gamification, offline, scientific, territorial, validation). Service integrations are in `mapping/services/` and include providers for botanical identification, taxonomic enrichment, environmental alerts, and climate data.
-- **API (Django REST Framework):** RESTful endpoints documented in `docs/api_endpoints.md`. Scientific endpoints are prefixed `/api/cientifico/` and cover inference, validation queue, expert review, decision history, and the scientific dashboard.
-- **Mobile (React Native / Expo):** Offline-capable client with screens for map visualisation, point registration, image capture, expert review panel, and push notifications.
+# Scope, areas, and audience
 
-## Scientific Workflow
+- **Main areas:** Citizen science; biodiversity informatics; food security; environmental monitoring; geospatial systems.
+- **Primary audience:** Researchers, biodiversity and food security teams, environmental managers, and citizen science initiatives.
+- **Secondary audience:** Educators, extension projects, NGOs, and technical teams working with edible biodiversity and territorial monitoring.
 
-The core workflow (`docs/fluxo_cientifico_do_sistema.md`) proceeds as follows:
+# Distinguishing features
 
-1. **Registration:** A contributor records a `PontoPANC` with geolocation (`PointField`), photograph, and optional botanical context.
-2. **AI Inference:** `POST /api/cientifico/pontos/<id>/inferencia/` calls configured external providers, normalises top-k predictions with confidence scores, classifies confidence into risk bands, and persists a `PredicaoIA` record.
-3. **Review Queue:** `GET /api/cientifico/revisao/fila/` exposes pending validations to authorised reviewers, filterable by confidence band, status, and date window.
-4. **Expert Validation:** `POST /api/cientifico/pontos/<id>/validacao/` records the specialist's decision in `ValidacaoEspecialista`, updating the point status (`validado`, `rejeitado`, or `necessita_revisao`) and logging a `HistoricoValidacao` event.
-5. **Divergence Tracking:** When expert and AI conclusions differ, the field `motivo_divergencia` captures the specialist's reasoning, creating an explicit record of model limitations.
-6. **Taxonomic Enrichment:** On save, an enrichment pipeline queries Global Names Verifier, Tropicos, GBIF, iNaturalist, Trefle, and Wikipedia to populate phenological and trait fields, with source attribution.
-7. **Territorial Prioritisation:** `calcular_score_prioridade()` combines incidence weight, climate risk, validation reliability, and observation recency into an interpretable composite score used in the scientific dashboard.
-8. **Scientific Dashboard:** `GET /api/cientifico/dashboard/` exposes aggregate metrics including validation rates, AI-expert agreement, confidence distribution, and temporal trends.
+- Role-restricted expert validation.
+- Human-in-the-loop decision provenance.
+- AI prediction persistence and divergence tracking.
+- Territorial prioritization.
+- Integration of environmental alerts.
+- Focus on PANCs rather than generic biodiversity records.
 
-## Environmental Monitoring
+# Core functionality and workflow
 
-The platform integrates real-time environmental signals via MapBiomas Alerta (deforestation alerts), NASA FIRMS (fire detection), INMET (meteorological alerts), and Open-Meteo (weather data). These are surfaced in the mobile client and the admin panel to provide ecological context for field observations.
+1. Georeferenced collaborative registration of PANC observations.
+2. AI-assisted plant identification support.
+3. Expert validation workflow with auditable history.
+4. Taxonomic enrichment from external providers.
+5. Environmental and territorial monitoring integrations.
+6. Mobile/web parity with API-backed workflows.
 
-# Example Data
+**Main workflow:** Registration → AI inference → expert review → validated record → territorial/environmental context.
 
-The file `Pancs.csv` included in the repository provides a reference database of approximately 300 PANC species with common names, scientific names, plant type, edible parts, and primary use. This file serves as the seed for the offline plant identification module and as a reproducible example dataset for testing and demonstration.
+# Technical stack
 
-# Testing
+- **Backend:** Django 4.2 + Django REST Framework + django-allauth.
+- **Web frontend:** Web platform served by the Django stack / API-backed web flows.
+- **Mobile app:** Expo SDK 54 + React Native 0.81.
+- **Database:** PostgreSQL + PostGIS.
+- **External APIs/services:** PlantNet, Plant.id, GBIF, iNaturalist, Tropicos, Global Names, Trefle, Wikipedia, MapBiomas, INMET, NASA FIRMS, Open-Meteo.
+- **Infrastructure baseline:** VPS (4 GB RAM, 3 CPU cores).
+- **Dependencies:** Python 3.11, PostgreSQL/PostGIS, GDAL, Node.js 18+.
+- **Supported OS:** Linux, macOS, Windows (via Docker).
 
-Automated tests cover the scientific core, AI identification providers, enrichment pipeline, environmental alerts, territorial prioritisation, and API permissions. The test suite is located in `tests/` (12 modules) and `mapping/tests.py`. Tests are executed with `pytest` and require a configured PostgreSQL/PostGIS database or a test-compatible SQLite fallback for unit-level tests. A GitHub Actions CI workflow (`.github/workflows/ci.yml`) runs the full suite on every push and pull request.
+# Quantitative validation highlights
+
+- Validation and rejection rates.
+- AI vs expert agreement and divergence (top-1).
+- Inference confidence distribution (high, medium, low).
+- Average time to validation (in hours).
+
+**Recommended strongest metric:** AI vs expert agreement/divergence (top-1), because it directly quantifies the behavior of the AI-assisted workflow against the final human expert decision.
+
+# Data statement
+
+The software source code is openly available. A curated demonstration dataset and repository materials will be made publicly available to support inspection and reuse of the software. Operational or user-contributed records containing sensitive geolocation or account-linked information are not released publicly; only non-sensitive, reproducible example data are provided.
+
+# Funding
+
+This work was supported by CNPq, FAPEMIG, and CAPES. Grant or process numbers were not available at the time of submission.
 
 # Acknowledgements
 
-The authors acknowledge the open-source communities behind Django, PostGIS, GeoDjango, React Native, Expo, PlantNet, GBIF, iNaturalist, and the scientific datasets that make the enrichment pipeline possible.
+The authors acknowledge the support of CNPq, FAPEMIG, CAPES, UFMG, UFSJ, EPAMIG, and GEPEQF.
 
-# References
+# Conflict of interest
+
+The authors declare that they have no known competing interests.
+
+# Generative AI declaration
+
+Generative AI was used for grammatical improvements and translation support during manuscript preparation. All generated outputs were reviewed, edited, and validated by the authors, who take full responsibility for the final content of the manuscript.
+
+# Author contributions (CRediT)
+
+- **Warley Alisson Souza:** Conceptualization; Software; Methodology; Data curation; Visualization; Writing – original draft.
+- **Raquel Linhares Bello de Araujo:** Supervision; Conceptualization; Methodology; Writing – review & editing.
+- **Marinalva Woods Pedrosa:** Resources; Validation; Writing – review & editing.
+- **Julio Onesio-Ferreira Melo:** Methodology; Validation; Writing – review & editing.
+
+# SoftwareX metadata table (C1–C9)
+
+- **C1 — Current code version:** 1.0.0
+- **C2 — Permanent link to code/repository used for this code version:** https://doi.org/10.5281/zenodo.19546445
+- **C3 — Permanent link to Reproducible Capsule:** N/A
+- **C4 — Legal Code License:** MIT
+- **C5 — Code versioning system used:** Git
+- **C6 — Software code languages, tools, and services used:** Python; JavaScript; Django 4.2; Django REST Framework; PostgreSQL/PostGIS; React Native; Expo; external enrichment and environmental services
+- **C7 — Compilation requirements, operating environments & dependencies:** Python >= 3.11; PostgreSQL >= 12 with PostGIS; GDAL >= 3.0; Node.js >= 18; Linux/macOS/Windows via Docker
+- **C8 — Link to developer documentation/manual:** https://github.com/warleynutricionista-jpg/colaborapanc/blob/main/docs/en/index.md
+- **C9 — Support email for questions:** warleyalisson@gmail.com
+
+# Availability and archiving
+
+- **GitHub release used for this version:** https://github.com/warleynutricionista-jpg/colaborapanc/releases/tag/1.0.0
+- **Archival DOI:** https://doi.org/10.5281/zenodo.19546445
+- **Archival platform:** Zenodo
+
+# Recommended figures for manuscript assembly
+
+1. Overall software architecture.
+2. Scientific workflow from citizen record submission to expert-validated output.
+3. External integrations and enrichment pipeline.
+4. Representative web/mobile interface or dashboard.
+5. Auditable AI suggestion versus expert validation trail.

@@ -1,17 +1,13 @@
 cff-version: 1.2.0
-message: "If you use ColaboraPANC in your research, please cite it using the metadata below."
+message: "If you use ColaboraPANC, please cite it using this metadata."
 type: software
 title: "ColaboraPANC"
 version: "1.0.0"
 doi: "10.5281/zenodo.19546445"
 date-released: "2026-04-12"
-license: MIT
+license: "MIT"
 repository-code: "https://github.com/warleynutricionista-jpg/colaborapanc"
 url: "https://github.com/warleynutricionista-jpg/colaborapanc"
-abstract: >
-  ColaboraPANC is an open-source collaborative platform for georeferenced mapping
-  of non-conventional food plants (PANCs), integrating AI-assisted identification,
-  expert validation, environmental monitoring, and web/mobile workflows.
 authors:
   - family-names: "Souza"
     given-names: "Warley Alisson"

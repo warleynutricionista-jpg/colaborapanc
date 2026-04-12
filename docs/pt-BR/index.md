@@ -20,6 +20,7 @@ Esta é a árvore canônica de documentação em português brasileiro para o es
 - [Roadmap](./roadmap.md)
 - [FAQ](./faq.md)
 - [Fluxos Mobile e Recursos Avançados (Anexo Técnico)](./fluxos-mobile-avancados.md)
+- [Citação e release do software](./citacao.md)
 
 ## O que estes documentos representam
 

@@ -2,47 +2,34 @@
 
 > **Seletor de idioma:** [Português (Brasil)](./README.pt-BR.md) | [English](./README.md)
 
-O ColaboraPANC é uma plataforma colaborativa open source para mapeamento georreferenciado de Plantas Alimentícias Não Convencionais (PANC), unindo contribuição comunitária, fluxos científicos assistidos por IA, monitoramento ambiental e paridade entre web e mobile.
+O ColaboraPANC é uma plataforma colaborativa open source para mapeamento georreferenciado de Plantas Alimentícias Não Convencionais (PANCs), integrando identificação assistida por IA, validação por especialistas, monitoramento ambiental e fluxos web/mobile. Seu propósito é ampliar a usabilidade científica, a rastreabilidade e a interpretação territorial de registros de biodiversidade contribuídos por cidadãos no contexto brasileiro.
 
-## O que o sistema inclui atualmente
+## Público-alvo
 
-### 1) Plataforma backend (Django + DRF)
-- Fluxos web para visualização em mapa, contribuição, curadoria, moderação e painéis administrativos.
-- Endpoints REST para pontos, recursos de colaboração, rotas, notificações e preferências de usuário.
-- Fluxos de autenticação e contas via login por token, registro e rotas de conta do django-allauth.
+- **Principal:** Pesquisadores, equipes de biodiversidade e segurança alimentar, gestores ambientais e iniciativas de ciência cidadã.
+- **Secundário:** Educadores, projetos de extensão, ONGs e equipes técnicas que atuam com biodiversidade alimentar e monitoramento territorial.
 
-### 2) Fluxo científico e validação assistida por IA
-- Endpoint de inferência por IA para suporte à identificação botânica no fluxo científico.
-- Fila de revisão, detalhe por ponto em revisão, decisão de validação e histórico auditável de decisões.
-- Lógica de classificação por confiança/risco e serviços de priorização em nível de domínio.
+## Funcionalidades principais
 
-### 3) Integrações ambientais e territoriais
-- Endpoints de alertas MapBiomas (alertas, detalhamento, territórios, consultas por CAR/propriedade e análise por ponto).
-- Endpoints de alertas climáticos (alertas ativos, histórico, status operacional e sincronização).
-- Priorização territorial e serviços de domínio para contexto ambiental.
+1. Registro colaborativo georreferenciado de observações de PANCs.
+2. Suporte à identificação botânica assistida por IA.
+3. Fluxo de validação por especialistas com histórico auditável.
+4. Enriquecimento taxonômico com provedores externos.
+5. Integrações de monitoramento ambiental e territorial.
+6. Paridade mobile/web com fluxos apoiados por API.
 
-### 4) Aplicativo mobile (Expo/React Native)
-- Cliente mobile dedicado com Expo SDK 54 e React Native 0.81.
-- Endpoints de paridade mobile para identificação por imagem, previews de mapa e metadados/download de base offline.
-- Scripts para Android, iOS, web, diagnóstico e testes mobile orientados a CI.
+**Fluxo principal:** Registro → inferência por IA → revisão especializada → registro validado → contexto territorial/ambiental.
 
-### 5) Módulos auxiliares de colaboração
-- Fluxos de notificações e token de push.
-- APIs de conversas/mensagens.
-- Gamificação, missões, rankings e experiências de comunidades/grupos.
-- Capacidades de enriquecimento e saúde de integrações com provedores externos.
+## Stack técnica
 
-### 6) Testes e operação
-- Suíte automatizada em `tests/` cobrindo núcleo científico, permissões, enriquecimento, integrações, clima, alertas ambientais e serviços relacionados.
-- Rotas operacionais como healthcheck (`/healthz/`) e endpoints administrativos de status/teste de integrações.
-
-## Stack tecnológica atual
-
-- **Backend:** Django 4.2, Django REST Framework, django-allauth.
-- **Banco de dados:** PostgreSQL + PostGIS.
-- **Dependências GIS:** GDAL.
-- **Mobile:** Expo SDK 54, React Native 0.81.
-- **Testes:** pytest + pytest-django (backend), jest/jest-expo (mobile).
+- **Backend:** Django 4.2 + Django REST Framework + django-allauth
+- **Frontend web:** Plataforma web servida pela stack Django / fluxos web apoiados por API
+- **Aplicativo mobile:** Expo SDK 54 + React Native 0.81
+- **Banco de dados:** PostgreSQL + PostGIS
+- **APIs/serviços externos:** PlantNet, Plant.id, GBIF, iNaturalist, Tropicos, Global Names, Trefle, Wikipedia, MapBiomas, INMET, NASA FIRMS, Open-Meteo
+- **Infraestrutura base:** VPS (4 GB RAM, 3 núcleos de CPU)
+- **Dependências:** Python 3.11, PostgreSQL/PostGIS, GDAL, Node.js 18+
+- **Sistemas operacionais suportados:** Linux, macOS, Windows (via Docker)
 
 ## Início rápido
 
@@ -56,8 +43,6 @@ python manage.py migrate
 python manage.py runserver 0.0.0.0:8000
 ```
 
-URL local padrão: `http://localhost:8000`.
-
 ### Mobile
 
 ```bash
@@ -66,11 +51,41 @@ npm install
 npm start
 ```
 
-## Portas de entrada da documentação
+## Testes
+
+```bash
+# Testes locais básicos de backend
+pytest
+
+# Testes de backend CI/CD com cobertura
+pytest tests/ mapping/tests.py --cov=mapping --cov-report=term-missing --cov-report=xml -v --tb=short
+
+# Testes do app mobile
+npm run test:ci
+
+# Validação de lint/estilo do backend
+flake8 mapping/ config/ tests/ --max-line-length=120 --exclude=mapping/migrations/,__pycache__ --count --statistics
+```
+
+## Documentação
 
 - **Hub de documentação:** [`docs/README.md`](./docs/README.md)
 - **Índice canônico em inglês:** [`docs/en/index.md`](./docs/en/index.md)
 - **Índice canônico em português (Brasil):** [`docs/pt-BR/index.md`](./docs/pt-BR/index.md)
+- **Guia de citação (EN):** [`docs/en/citation.md`](./docs/en/citation.md)
+- **Guia de citação (PT-BR):** [`docs/pt-BR/citacao.md`](./docs/pt-BR/citacao.md)
+
+## Citação, release e DOI
+
+- **Nome do software:** ColaboraPANC
+- **Versão:** 1.0.0
+- **Release/tag:** https://github.com/warleynutricionista-jpg/colaborapanc/releases/tag/1.0.0
+- **DOI arquival (Zenodo):** https://doi.org/10.5281/zenodo.19546445
+- **Metadados preferenciais de citação:** [`CITATION.cff`](./CITATION.cff)
+
+## Declaração breve de dados
+
+O código-fonte do software é aberto. Um conjunto demonstrativo curado e materiais do repositório são disponibilizados para inspeção e reúso. Registros operacionais ou contribuídos por usuários com geolocalização sensível ou dados vinculados a contas não são divulgados publicamente.
 
 ## Metadados do projeto
 
